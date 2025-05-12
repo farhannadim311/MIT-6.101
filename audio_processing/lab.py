@@ -24,55 +24,57 @@ def backwards(sound):
     rev_sound = {}
     rev_sound["rate"] = sound["rate"]
     rev_sound["samples"] = [0] * (rev_index + 1)
-    index = 0
-    for i in sound["samples"]:
-        rev_sound["samples"][index] = sound["samples"][rev_index]
+    for i in range(len(sound["samples"])):
+        rev_sound["samples"][i] = sound["samples"][rev_index]
         rev_index -= 1
-        index += 1
 
     return rev_sound
 
 
 def mix(sound1, sound2, p):
+    """
+    Returns a mix of the two sounds passed into the parameter
+
+    Args:
+        sound1: a dictionary representing a sound
+        sound2: a dictionary representing another sound
+        p: a mixing parameter which is used to multiply to get the new sound
+    Returns:
+        A new mono sound dictionary with the two sounds mixed together
+    """
     # mix 2 good sounds
     if (
-        ("rate" in sound1) == False
-        or ("rate" in sound2) == False
-        or (sound1["rate"] == sound2["rate"]) == False
+        ("rate" in sound1) is False
+        or ("rate" in sound2) is False
+        or (sound1["rate"] == sound2["rate"]) is False
     ):
 
         print("no")
-        return
+        return None
 
     r = sound1["rate"]  # get rate
     sound1 = sound1["samples"]
     sound2 = sound2["samples"]
     if len(sound1) < len(sound2):
-        l = len(sound2)
+        max_len = len(sound2)
     elif len(sound2) < len(sound1):
-        l = len(sound1)
-    elif len(sound1) == len(sound2):
-        l = len(sound2)
+        max_len = len(sound1)
     else:
-        print("whoops")
-        return
-
-    s = []
+        max_len = len(sound2)
+    sound = []
     x = 0
-    while x <= l:
+    while x <= max_len:
         if x < len(sound1) and x < len(sound2):
-            s.append(p * sound1[x] + sound2[x] * (1 - p))
-        elif x < len(sound1) and x >= len(sound2):
-            s.append(p * sound1[x])
-        elif x >= len(sound1) and x < len(sound2):
-            s.append(sound2[x] * (1 - p))
-        elif x >= len(sound1) and x >= len(sound2):
-            s.append(0)
+            sound.append(p * sound1[x] + sound2[x] * (1 - p))
+        elif len(sound2) <= x < len(sound1):
+            sound.append(p * sound1[x])
+        else:
+            sound.append(sound2[x] * (1 - p))
         x += 1
-        if x == l:  # end
+        if x == max_len:  # end
             break
 
-    return {"rate": r, "samples": s}  # return new sound
+    return {"rate": r, "samples": sound}  # return new sound
 
 
 def convolve(sound, kernel):
@@ -88,7 +90,35 @@ def convolve(sound, kernel):
     Returns:
         A new mono sound dictionary resulting from the convolution.
     """
-    raise NotImplementedError
+    new_sound = []
+    res = {}
+    res["rate"] = sound["rate"]
+    res["samples"] = [0] * (len(sound) + (len(kernel) ))
+    for row in range(len(kernel)):
+        inner_list = []
+        for col in range(len(sound) + (len(kernel))):
+            if(col > len(sound)):
+                inner_list.append(0)
+            else:
+                inner_list.append(sound["samples"][col])
+        new_sound.append(inner_list)
+    for i in range(len(new_sound)):
+        for j in range(len(new_sound[i])):
+            if(kernel[j] != 0):
+                new_sound[i][j] *= kernel[j]
+            if(kernel[j] != 0):
+                if(i + j > len(new_sound[i])):
+                    for k in range(j + i):
+                        new_sound[i][j] = 0
+                else:
+                    new_sound[i][i + j] = new_sound[i][j]
+        if (j == len(kernel) - 1):
+            break
+    for i in new_sound:
+        for idx, j in enumerate(new_sound[i]):
+            res["samples"][idx] += j
+    return res
+
 
 
 def echo(sound, num_echoes, delay, scale):
@@ -224,6 +254,7 @@ if __name__ == "__main__":
     # here is an example of loading a file (note that this is specified as
     # sounds/hello.wav, rather than just as hello.wav, to account for the
     # sound files being in a different directory than this file)
-    hello = load_wav("sounds/mystery.wav")
-
-    write_wav(backwards(hello), 'mystery_reversed.wav')
+    #synth = load_wav("sounds/synth.wav")
+    #water = load_wav("sounds/water.wav")
+    #write_wav(mix(synth, water, 0.2), "mix.wav")
+    pass
