@@ -84,40 +84,22 @@ def convolve(sound, kernel):
 
     Args:
         sound: a dictionary representing the original mono sound
-        kernel: list of numbers, the signal with which the sound should be
+        kenel: list of numbers, the signal with which the sound should be
                 convolved
 
     Returns:
         A new mono sound dictionary resulting from the convolution.
     """
-    new_sound = []
-    res = {}
-    res["rate"] = sound["rate"]
-    res["samples"] = [0] * (len(sound) + (len(kernel) ))
-    for row in range(len(kernel)):
-        inner_list = []
-        for col in range(len(sound) + (len(kernel))):
-            if(col > len(sound)):
-                inner_list.append(0)
-            else:
-                inner_list.append(sound["samples"][col])
-        new_sound.append(inner_list)
-    for i in range(len(new_sound)):
-        for j in range(len(new_sound[i])):
-            if(kernel[j] != 0):
-                new_sound[i][j] *= kernel[j]
-            if(kernel[j] != 0):
-                if(i + j > len(new_sound[i])):
-                    for k in range(j + i):
-                        new_sound[i][j] = 0
-                else:
-                    new_sound[i][i + j] = new_sound[i][j]
-        if (j == len(kernel) - 1):
-            break
-    for i in new_sound:
-        for idx, j in enumerate(new_sound[i]):
-            res["samples"][idx] += j
-    return res
+    input_samples = sound["samples"]
+    output_len = len(input_samples) + len(kernel) - 1
+    output_samples = [0.0] * output_len
+
+    for i in range(len(input_samples)):
+        for j in range(len(kernel)):
+            output_samples[i + j] += input_samples[i] * kernel[j]
+
+    return {"rate": sound["rate"], "samples": output_samples}
+   
 
 
 
@@ -135,15 +117,33 @@ def echo(sound, num_echoes, delay, scale):
     Returns:
         A new mono sound dictionary resulting from applying the echo effect.
     """
-    raise NotImplementedError
+    sample_delay = round(delay * sound["rate"])
+    output_len = len(sound["samples"]) + sample_delay * num_echoes
+    output_list = [0] * output_len
+    for i in range (1, num_echoes + 1):
+        for k in range( len(sound["samples"])):
+            output_list[(sample_delay * i) + k] += sound["samples"][k] * (scale**i)
+    for k in range( len(sound["samples"])):
+        output_list[k] += sound["samples"][k]
+
+    return {"rate": sound["rate"], "samples": output_list}
 
 
 def pan(sound):
-    raise NotImplementedError
+    left_list = [0] * len(sound["left"])
+    right_list = [0] * len(sound["right"])
+    for i in range(len(sound["left"])):
+        left_list[i] = sound["left"][i] * (1 - (i/ (len(sound["left"]) - 1)))
+    for i in range(len(sound["right"])):
+        right_list[i] = sound["right"][i] * (i/ (len(sound["right"]) - 1))
+    return {"rate" : sound["rate"],  "left": left_list, "right": right_list}
 
 
 def remove_vocals(sound):
-    raise NotImplementedError
+    res = []
+    for i in range(len(sound["left"])):
+        res.append(sound["left"][i] - sound["right"][i])
+    return {"rate": sound["rate"], "samples": res}
 
 
 def bass_boost_kernel(n_val, scale=0):
@@ -254,7 +254,6 @@ if __name__ == "__main__":
     # here is an example of loading a file (note that this is specified as
     # sounds/hello.wav, rather than just as hello.wav, to account for the
     # sound files being in a different directory than this file)
-    #synth = load_wav("sounds/synth.wav")
-    #water = load_wav("sounds/water.wav")
-    #write_wav(mix(synth, water, 0.2), "mix.wav")
-    pass
+    synth = load_wav("sounds/lookout_mountain.wav", stereo= True)
+    write_wav(remove_vocals(synth), "r.wav")
+    
