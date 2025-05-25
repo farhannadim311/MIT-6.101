@@ -29,40 +29,37 @@ def flatten(xss):
 
 def get_pixel(image, row, col, boundrary_behaviour = None):
     if(boundrary_behaviour == "zero"):
-        if((row < 0 or row > image["width"])) or (col < 0 or col > image["height"]):
+        if((row < 0 or row > image["height"] - 1)) or (col < 0 or col > image["width"] - 1):
             return 0
         else:
-            return image["pixels"][col][row]
+            return image["pixels"][row][col]
     elif(boundrary_behaviour == "extend"):
-        if(col <= 0 and row < 0):
+        if ((row >= 0 and row <= image["height"] -1) and (col >= 0 and col <= image["width"] - 1)):
+            return image["pixels"][row][col]
+        elif (row <= 0 and col <= 0):
             return image["pixels"][0][0]
-        elif(col <= 0 and row >= image["width"]):
-            return image["pixels"][0][image["width"] - 1] 
-        elif(col >= image["height"] and row < 0):
-            return image["pixels"][image["height"] - 1][0]
-        elif(col >= image["height"] and row < 0):
-            return image["pixels"][image["height"] - 1][0]
-        elif (col >= image["height"] and row > image["width"]):
-            return image["pixels"][image["height"]][image["width"] - 1]
-        elif (col == 0 and row > 0):
-            return image["pixels"][0][row]
-        elif (col > 0 and row == 0):
-            return image["pixels"][col][0]
-        elif (col > 0 and row == (image["width"] - 1)):
-            return image["pixels"][col][image["width"] - 1]
-        elif (col == (image["height"] - 1) and row > 0):
-            return image["pixels"][image["height"] - 1][row]
-        else:
-            return image["pixels"][col][row]
+        elif (row <= 0 and (col >= image["width"] -1)):
+            return image["pixels"][0][image["width"] - 1]
+        elif (row <= 0 and (col > 0 and col <= image["width"] - 1)):
+            return image["pixels"][0][col]
+        elif (row >= image["height"] - 1 and col <= 0):
+            return image["pixels"][image["height"] -1][0]
+        elif ((row > 0 and row <= image["height"] - 1) and col <= 0 ):
+            return image["pixels"][row][0]
+        elif ((row >= image["height"] - 1) and col >= image["width"] - 1):
+            return image["pixels"][image["height"] - 1][image["width"] -1]
+        elif ((row >= image["height"] - 1) and (col > 0 and col <= image["width"] -1 )):
+              return image["pixels"][image["height"] - 1][col]
+        elif ((row > 0 and row <= image["height"] - 1) and col >= image["width"] - 1):
+            return image["pixels"][row][image["width"] - 1]
     elif (boundrary_behaviour == "wrap"):
-        return image["pixels"][col % image["height"]][row  % image["width"]]
-    else:
-        return image["pixels"][col][row]
+        return image["pixels"][row % image["height"]][col  % image["width"]]
+    return image["pixels"][row][col]
 
 
 def set_pixel(image, row,  col, color):
   
-     image["pixels"][col][row] = color
+     image["pixels"][row][col] = color
 
 
 def apply_per_pixel(image, func):
@@ -72,8 +69,8 @@ def apply_per_pixel(image, func):
         "pixels": [[0 for _ in range(image["width"])] for _ in range(image["height"])]
     }
     new_image = oned_to_twod(image)
-    for col in range(image["height"]):
-        for row in range(image["width"]):
+    for row in range(image["height"]):
+        for col in range(image["width"]):
             color = get_pixel(new_image, row, col)
             new_color = func(color)
             set_pixel(result, row, col, new_color)
@@ -89,43 +86,45 @@ def inverted(image):
 
 def correlate(image, kernel, boundary_behavior):
     """
-    Compute the result of correlating the given image with the given kernel.
-    `boundary_behavior` will one of the strings "zero", "extend", or "wrap",
-    and this function will treat out-of-bounds pixels as having the value zero,
-    the value of the nearest edge, or the value wrapped around the other edge
-    of the image, respectively.
-
-    if boundary_behavior is not one of "zero", "extend", or "wrap", return
-    None.
-
-    Otherwise, the output of this function should have the same form as a 6.101
-    image (a dictionary with "height", "width", and "pixels" keys), but its
-    pixel values do not necessarily need to be in the range [0,255], nor do
-    they need to be integers (they should not be clipped or rounded at all).
-
-    This process should not mutate the input image; rather, it should create a
-    separate structure to represent the output.
-
-    DESCRIBE YOUR KERNEL REPRESENTATION HERE
+    Apply correlation between a 2D kernel and the image.
+    Supports 'zero', 'extend', and 'wrap' boundary behavior.
+    Returns a new image dictionary with floating-point pixel values.
     """
-    kernel = [[0,0,0], [0,0,1], [0,0,0]]
-    if(boundary_behavior != "zero" and boundary_behavior != "extend" and boundary_behavior != "wrap"):
+    if boundary_behavior not in ("zero", "extend", "wrap"):
         return None
+
+    # Prepare output image
     result = {
-        "height" : image["height"],
-        "width" : image["width"],
-        "pixels" : [[0 for _ in range(image["width"])] for _ in range(image["height"])]
+        "height": image["height"],
+        "width": image["width"],
+        "pixels": [[0 for _ in range(image["width"])] for _ in range(image["height"])]
     }
-    new_image = oned_to_twod(image)
-    for col in range(image["height"]):
-        for row in range(image["width"]):
-            color = get_pixel(new_image, row, col, boundary_behavior)
-            for i in range(len(kernel)):
-                for j in range(len(i)):
-                    color += get_pixel(new_image, row - 1 - i, col - 1 - j, boundary_behavior)
-        set_pixel(result, row, col, color)    
+
+    # Convert 1D pixel list to 2D for easier access
+    image_2d = oned_to_twod(image)
+
+    # Get kernel dimensions and center offset
+    k_height = len(kernel)
+    k_width = len(kernel[0])
+    k_center_row = k_height // 2
+    k_center_col = k_width // 2
+
+    # Loop over each image pixel
+    for row in range(image["height"]):
+        for col in range(image["width"]):
+            acc = 0  # accumulator for weighted sum
+            for kr in range(k_height):
+                for kc in range(k_width):
+                    image_r = row - k_center_row + kr
+                    image_c = col - k_center_col + kc
+                    pixel = get_pixel(image_2d, image_r, image_c, boundary_behavior)
+                    acc += pixel * kernel[kr][kc]
+            result["pixels"][row][col] = acc
+
+    # Flatten pixel list before returning
     result["pixels"] = flatten(result["pixels"])
     return result
+
 
 
 def round_and_clip_image(image):
@@ -139,8 +138,14 @@ def round_and_clip_image(image):
     255 in the output; and any locations with values lower than 0 in the input
     should have value 0 in the output.
     """
-    raise NotImplementedError
-
+    for idx, val in enumerate(image["pixels"]):
+        val = round(val)             
+        if val < 0:
+            val = 0
+        elif val > 255:
+            val = 255
+        image["pixels"][idx] = val
+    return image
 
 # FILTERS
 
@@ -159,10 +164,116 @@ def blurred(image, kernel_size):
 
     # and, finally, make sure that the output is a valid image (using the
     # helper function from above) before returning it.
-    raise NotImplementedError
+    kernel = blur_kernel(kernel_size)
+    boundary = "extend"
+    result = correlate(image, kernel, boundary)
+    result = round_and_clip_image(result)
+    return result
 
+def blur_kernel(size):
+    val = 1 / (size * size)
+    array = [[val for _ in range(size)] for _ in range(size)]
+    return array
 
+def sharpened(image, kernel_size):
+    """
+    Applies an unsharp mask to the given greyscale image to produce a sharpened version.
 
+    This operation enhances edges and fine details by subtracting a blurred version
+    of the image from the original image and scaling the difference. Mathematically,
+    the sharpened image S is computed as:
+
+        S = 2 * Original - Blurred
+
+    where the blurred image is created using a box blur of the specified kernel size.
+
+    The result is then rounded and clipped to ensure all pixel values are valid 
+    integers in the range [0, 255].
+
+    Parameters:
+        image (dict): A 6.101-format greyscale image dictionary with 'height', 
+                      'width', and 'pixels' keys.
+        kernel_size (int): Size of the box blur kernel to use for the unsharp mask.
+
+    Returns:
+        dict: A new 6.101-format image dictionary representing the sharpened image.
+    """
+    kernel = blur_kernel(kernel_size)
+    boundary = "extend"
+    blur = correlate(image, kernel, boundary)
+    result = {
+        "height" : image["height"],
+        "width" : image["width"],
+        "pixels" : [[0 for _ in range(image["width"])] for _ in range(image["height"])]
+    }
+    twod_image = oned_to_twod(image)
+    two_blur = oned_to_twod(blur)
+    for i in range(image["height"]):
+        for j in range(image["width"]):
+            result["pixels"][i][j] = 2 * twod_image["pixels"][i][j] - two_blur["pixels"][i][j]
+    result["pixels"] = flatten(result["pixels"])
+    result = round_and_clip_image(result)
+    return result
+def edges(image):
+    """
+    Applies the Sobel edge detection filter to a greyscale image.
+
+    This operation detects edges by combining the results of two separate 
+    correlations: one using the Sobel kernel for detecting horizontal changes (Gx),
+    and one for vertical changes (Gy). These are defined as:
+
+        Gx = [[-1, -2, -1],
+              [ 0,  0,  0],
+              [ 1,  2,  1]]
+
+        Gy = [[-1,  0,  1],
+              [-2,  0,  2],
+              [-1,  0,  1]]
+
+    After applying each kernel to the image (with 'extend' boundary behavior),
+    the output pixel at position (r, c) is computed as:
+
+        sqrt(Gx[r, c]^2 + Gy[r, c]^2)
+
+    This highlights areas in the image where pixel values change quickly,
+    which typically correspond to edges.
+
+    The final output is rounded and clipped so that all pixel values are integers 
+    within the range [0, 255].
+
+    Parameters:
+        image (dict): A 6.101-format greyscale image dictionary with 'height',
+                      'width', and 'pixels' keys.
+
+    Returns:
+        dict: A new 6.101-format image dictionary representing the edge-detected image.
+    """
+    Gx = [
+    [-1, -2, -1],
+    [ 0,  0,  0],
+    [ 1,  2,  1] ]
+    Gy = [
+    [-1, 0, 1],
+    [-2, 0, 2],
+    [-1, 0, 1]
+]
+    two_d = oned_to_twod(image)
+    boundary = "extend"
+    result = {
+        "height" : image["height"],
+        "width" : image["width"],
+        "pixels" : [[0 for _ in range(image["width"])] for _ in range(image["height"])]
+    }
+    temp1 = correlate(image, Gx, boundary)
+    temp2 = correlate(image, Gy, boundary)
+    temp1_two = oned_to_twod(temp1)
+    temp2_two = oned_to_twod(temp2)
+    for i in range(image["height"]):
+        for j in range(image["width"]):
+            result["pixels"][i][j] = math.sqrt((temp1_two["pixels"][i][j])**2 + (temp2_two["pixels"][i][j])**2)
+    result["pixels"] = flatten(result["pixels"])
+    result = round_and_clip_image(result)
+    return result
 # HELPER FUNCTIONS FOR DISPLAYING, LOADING, AND SAVING IMAGES
 
 def print_greyscale_values(image):
@@ -242,9 +353,14 @@ def save_greyscale_image(image, filename, mode="PNG"):
 
 
 if __name__ == "__main__":
-    # code in this block will only be run when you explicitly run your script,
-    # and not when the tests are being run.  this is a good place for
-    # generating images, etc.
-    inv = load_greyscale_image("test_images/bluegill.png")
-    inv = inverted(inv)
-    save_greyscale_image(inv, "inverted_image.png")
+    # Load the input image
+    img = load_greyscale_image("test_images/construct.png")
+
+    # Apply Sobel edge detection
+    edge_img = edges(img)
+
+    # Save the result to a file
+    save_greyscale_image(edge_img, "outputs/construct_edges.png")
+
+    print("Edge-detected image saved as: outputs/construct_edges.png")
+
