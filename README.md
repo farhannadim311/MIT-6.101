@@ -137,5 +137,14 @@ Applies an unsharp mask using a blurred version of the image.
 ### `edges(image)`
 Detects edges using the Sobel operator (combining horizontal and vertical gradients).
 
+## 🧠 Learning Takeaways
+
+- Understood and implemented correlation/convolution from scratch
+- Visualized and compared edge-handling modes: `zero`, `extend`, and `wrap`
+- Built modular, reusable Python functions for pixel-based image processing
+- Practiced test-driven development using `pytest`
+- Applied mathematical concepts like gradient magnitude, averaging, and unsharp masking
+- Reinforced Python fundamentals by manipulating nested lists and dictionaries directly
+- Gained practical insight into how Photoshop/GIMP-like filters work under the hood
 ---
 
