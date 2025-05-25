@@ -144,12 +144,76 @@ def test_blurred_images(kernsize, fname):
     compare_images(result, expected)
 
 def test_blurred_black_image():
-    # REPLACE THIS with your 1st test case from section 5.1
-    assert False
+    im = {
+        "height": 6,
+        "width": 5,
+        "pixels": [0] * (6 * 5)
+    }
+
+    expected = {
+        "height": 6,
+        "width": 5,
+        "pixels": [0] * (6 * 5)
+    }
+
+    # Test with 3x3 blur
+    result_3 = lab.blurred(im, 3)
+    result_3 = lab.round_and_clip_image(result_3)
+    compare_images(result_3, expected)
+
+    # Test with 5x5 blur
+    result_5 = lab.blurred(im, 5)
+    result_5 = lab.round_and_clip_image(result_5)
+    compare_images(result_5, expected)
 
 def test_blurred_centered_pixel():
-    # REPLACE THIS with your 2nd test case from section 5.1
-    assert False
+    im = {
+        "height": 11,
+        "width": 11,
+        "pixels": [0] * (11 * 11)
+    }
+    # Set center pixel to 255 (row 5, col 5)
+    center_index = 5 * 11 + 5
+    im["pixels"][center_index] = 255
+
+    # --- Test 3x3 kernel ---
+    result_3 = lab.blurred(im, 3)
+    result_3 = lab.round_and_clip_image(result_3)
+
+    # Build expected output for 3x3: all 9 pixels around (5,5) = 28
+    expected_3 = {
+        "height": 11,
+        "width": 11,
+        "pixels": [0] * (11 * 11)
+    }
+    for dr in [-1, 0, 1]:
+        for dc in [-1, 0, 1]:
+            r = 5 + dr
+            c = 5 + dc
+            idx = r * 11 + c
+            expected_3["pixels"][idx] = 28  # 255 / 9 = 28.33 → round to 28
+
+    compare_images(result_3, expected_3)
+
+    # --- Test 5x5 kernel ---
+    result_5 = lab.blurred(im, 5)
+    result_5 = lab.round_and_clip_image(result_5)
+
+    # Build expected output for 5x5: all 25 pixels around (5,5) = 10
+    expected_5 = {
+        "height": 11,
+        "width": 11,
+        "pixels": [0] * (11 * 11)
+    }
+    for dr in [-2, -1, 0, 1, 2]:
+        for dc in [-2, -1, 0, 1, 2]:
+            r = 5 + dr
+            c = 5 + dc
+            idx = r * 11 + c
+            expected_5["pixels"][idx] = 10  # 255 / 25 = 10.2 → round to 10
+
+    compare_images(result_5, expected_5)
+
 
 @pytest.mark.parametrize("kernsize", [1, 3, 9])
 @pytest.mark.parametrize("fname", ['mushroom', 'twocats', 'chess'])
@@ -174,7 +238,33 @@ def test_edges_images(fname):
     expected = lab.load_greyscale_image(expfile)
     assert object_hash(input_img) == input_hash, "Be careful not to modify the original image!"
     compare_images(result, expected)
-
 def test_edges_centered_pixel():
-    # REPLACE THIS with your test case from section 6
-    assert False
+    im = {
+        "height": 11,
+        "width": 11,
+        "pixels": [0] * (11 * 11)
+    }
+
+    # Set center pixel to 255 (row 5, col 5)
+    im["pixels"][5 * 11 + 5] = 255
+
+    expected = {
+    "height": 11,
+    "width": 11,
+    "pixels": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,   0,   0, 0, 0, 0, 0,
+        0, 0, 0, 0, 255, 255, 255, 0, 0, 0, 0,
+        0, 0, 0, 0, 255, 0,   255, 0, 0, 0, 0,
+        0, 0, 0, 0, 255, 255, 255, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,   0,   0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,   0,   0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,   0,   0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,   0,   0, 0, 0, 0, 0
+    ]
+}
+
+    result = lab.edges(im)
+    compare_images(result, expected)
