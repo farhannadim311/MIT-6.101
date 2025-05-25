@@ -95,3 +95,22 @@ write_wav(result, "echoed.wav")
 ---
 
 > This problem set provides a hands-on foundation in digital audio programming — ideal preparation for more advanced effects, real-time audio processing, and media tools.
+
+## 📁 PSet 2: Image Processing (6.101 Lab)
+
+A deep-dive into classic digital-image pipelines implemented **from scratch** — no NumPy, no SciPy — just Python, lists, and the ☕ you’ll need to debug correlation math at 2 a.m.  
+
+### 🎯 Objectives
+* **Understand digital images** as width × height pixel dictionaries (`{"pixels": …}`)  
+* Manipulate greyscale images at the per-pixel level (brightness 0–255)  
+* Implement **higher-order functional filters** (`apply_per_pixel`)  
+* Build a **general correlation engine** with configurable edge policies (`zero | extend | wrap`)  
+* Create real-world filters:  
+  * Inversion  
+  * Box-blur (arbitrary kernel sizes)  
+  * Unsharp-mask sharpening  
+  * Sobel **edge detection**  
+* Reinforce Python design patterns: helper functions, pure functions, unit tests with `pytest`
+
+---
+
