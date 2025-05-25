@@ -114,3 +114,28 @@ A deep-dive into classic digital-image pipelines implemented **from scratch** â€
 
 ---
 
+## ðŸ›  Implemented Functions
+
+### `apply_per_pixel(image, func)`
+Applies a function to every pixel in the image, returning a new image.
+
+### `inverted(image)`
+Inverts pixel brightness values (i.e., `pixel = 255 - pixel`).
+
+### `correlate(image, kernel, boundary)`
+Applies a kernel to the image using correlation and one of three edge behaviors: `"zero"`, `"extend"`, or `"wrap"`.
+
+### `round_and_clip_image(image)`
+Rounds and clamps all pixel values between 0 and 255.
+
+### `blurred(image, n)`
+Applies a box blur using an `n x n` averaging kernel.
+
+### `sharpened(image, n)`
+Applies an unsharp mask using a blurred version of the image.
+
+### `edges(image)`
+Detects edges using the Sobel operator (combining horizontal and vertical gradients).
+
+---
+
