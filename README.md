@@ -148,3 +148,111 @@ Detects edges using the Sobel operator (combining horizontal and vertical gradie
 - Gained practical insight into how Photoshop/GIMP-like filters work under the hood
 ---
 
+
+# 🧪 MIT 6.101: Image Processing Lab 2
+
+This project is a full implementation of the MIT 6.101 Lab: **Image Processing Part 2**, extending a basic image manipulation toolkit with advanced operations including convolutional filters, edge detection, sharpening, seam carving, and a custom creative filter.
+
+---
+
+## ✅ Features Implemented
+
+### 📦 Core Image Utilities
+- `oned_to_twod` / `flatten`: Converts between 1D and 2D image pixel representations.
+- `get_pixel` / `set_pixel`: Boundary-safe access and update for image pixels.
+- `apply_per_pixel`: Applies functions to each pixel in a greyscale image.
+
+---
+
+### 🎨 Filters and Effects
+
+- **Inversion**: Simple pixel-wise color inversion.
+- **Blurring**: Box blur using correlation with uniform kernels of variable size.
+- **Sharpening**: Unsharp masking with custom kernel sizes.
+- **Edge Detection**: Sobel filter to extract vertical and horizontal gradients.
+
+---
+
+### 🌈 Color Image Processing
+- Grayscale extraction by RGB channel.
+- `combine_colors`: Recombines individual channel images into a color image.
+- Color wrappers for greyscale filters.
+
+---
+
+### 🧰 Higher-Order Filters
+- `make_blur_filter`, `make_sharpen_filter`: Generate parameterized filter functions.
+- `filter_cascade`: Combine multiple filters into one seamless transformation pipeline.
+
+---
+
+### ✂️ Seam Carving
+- Dynamic programming to compute **minimum energy seams**.
+- Functions implemented:
+  - `compute_energy`
+  - `cumulative_energy_map`
+  - `minimum_energy_seam`
+  - `image_without_seam`
+  - `seam_carving` (removes multiple vertical seams)
+
+---
+
+### 💡 Custom Filter: Ripple Distortion
+A radial distortion effect that simulates water ripple waves emanating from the center of the image.
+
+```python
+def ripple(image, frequency=5, amplitude=5):
+    """
+    Applies a ripple distortion to a color image.
+    Each pixel is displaced radially using a sine-based function.
+    """
+```
+
+---
+
+## 📁 Directory Structure
+
+```
+image_processing_lab/
+├── lab.py                # Main lab implementation
+├── test_images/
+│   └── twocats.png       # Sample image used for testing
+├── twocats_carved.png    # Output of seam carving
+├── twocats_rippled.png   # Output of ripple filter
+└── README.md             # This documentation file
+```
+
+---
+
+## 🚀 How to Run
+
+1. Install dependencies:
+```bash
+pip install pillow
+```
+
+2. Run the main script:
+```bash
+python3 lab.py
+```
+
+Make sure `test_images/twocats.png` exists or change the path in the script.
+
+---
+
+## 📌 Notes
+
+- Seam carving modifies image width while preserving content structure by removing least important pixels.
+- All filters are implemented from scratch using only allowed libraries (`math`, `os`, and `PIL`).
+- Boundary handling strategies include **zero**, **extend**, and **wrap** for convolution-based operations.
+
+---
+
+## 🧠 Learning Outcomes
+
+- Deep understanding of pixel-based image manipulation
+- Working with filters, kernels, and convolution from first principles
+- Experience with dynamic programming (seam carving)
+- Creativity in developing new visual effects
+
+---
