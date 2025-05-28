@@ -149,7 +149,7 @@ Detects edges using the Sobel operator (combining horizontal and vertical gradie
 ---
 
 
-# 🧪 MIT 6.101: Image Processing Lab 2
+# 🧪 PSET3: Image Processing Lab 2
 
 This project is a full implementation of the MIT 6.101 Lab: **Image Processing Part 2**, extending a basic image manipulation toolkit with advanced operations including convolutional filters, edge detection, sharpening, seam carving, and a custom creative filter.
 
