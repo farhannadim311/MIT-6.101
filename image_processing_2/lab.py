@@ -299,38 +299,56 @@ def color_filter_from_greyscale_filter(filt):
 
 
 def color_to_greyscale(color, image):
-        """
-        Helper function to extract individual color from the images
-        """
-        result = {
-            "height" : image["height"],
-            "width" : image["width"],
-            "pixels" : [0 for _ in range(image["width"] * image["height"])]
-        }
-        if (color == "r"):
-            for i in image["pixels"]:
-                result["pixels"].append(i[0])
-        elif (color == "g"):
-            for i in image["pixels"]:
-                result["pixels"].append(i[1])
-        else:
-            for i in image["pixels"]:
-             result["pixels"].append(i[2])
-        return result
+    """
+    Helper function to extract a greyscale channel from a color image.
+    Returns a greyscale image with the same dimensions.
+    """
+    result = {
+        "height": image["height"],
+        "width": image["width"],
+        "pixels": [0 for _ in range(image["width"] * image["height"])]
+    }
+
+    if color == "r":
+        for idx, i in enumerate(image["pixels"]):
+            result["pixels"][idx] = i[0]
+    elif color == "g":
+        for idx, i in enumerate(image["pixels"]):
+            result["pixels"][idx] = i[1]
+    else:  # "b"
+        for idx, i in enumerate(image["pixels"]):
+            result["pixels"][idx] = i[2]
+
+    return result
+
 
 def combine_colors(image1, image2, image3):
     result = {
         "height" : image1["height"],
         "width" : image1["width"],
-        "pixels" : [((image1["pixels"]), (image2["pixels"]), (image3["pixels"]))]
-    }    
+        "pixels" : [[0,0,0] for _ in  range(image1["width"] * image1["height"])]
+    }  
+    for i in range(image1["height"] * image1["width"]):
+        result["pixels"][i][0] = image1["pixels"][i]  
+        result["pixels"][i][1] = image2["pixels"][i]  
+        result["pixels"][i][2] = image3["pixels"][i]  
+    for i in range(image1["height"] * image1["width"]):
+        result["pixels"][i] = tuple(result["pixels"][i])
     return result
+
+
 def make_blur_filter(kernel_size):
-    raise NotImplementedError
+    def color(image):
+        result = blurred(image, kernel_size)
+        return result
+    return color
 
 
 def make_sharpen_filter(kernel_size):
-    raise NotImplementedError
+    def color(image):
+        result = sharpened(image, kernel_size)
+        return result
+    return color
 
 
 def filter_cascade(filters):
@@ -339,9 +357,12 @@ def filter_cascade(filters):
     single filter such that applying that filter to an image produces the same
     output as applying each of the individual ones in turn.
     """
-    raise NotImplementedError
-
-
+    def color(image):
+        for i in filters:
+            image = i(image)
+        return image
+    return color
+        
 # SEAM CARVING
 
 # Main Seam Carving Implementation
@@ -352,8 +373,14 @@ def seam_carving(image, ncols):
     Starting from the given image, use the seam carving technique to remove
     ncols (an integer) columns from the image. Returns a new image.
     """
-    raise NotImplementedError
-
+    result = image
+    for i in range (ncols):
+        greyscale = greyscale_image_from_color_image(result)
+        energy = compute_energy(greyscale)
+        cum_energy_map = cumulative_energy_map(energy)
+        remove = minimum_energy_seam(cum_energy_map)
+        result = image_without_seam(result, remove)
+    return result
 
 # Optional Helper Functions for Seam Carving
 
@@ -364,7 +391,14 @@ def greyscale_image_from_color_image(image):
 
     Returns a greyscale image (represented as a dictionary).
     """
-    raise NotImplementedError
+    result = {
+        "height" : image["height"],
+        "width" : image["width"],
+        "pixels" : [0 for _ in range(image["width"] * image["height"])]
+    }
+    for idx, i in enumerate(image["pixels"]):
+        result["pixels"][idx] = round(0.299 * image["pixels"][idx][0] + 0.587 * image["pixels"][idx][1] + 0.114 * image["pixels"][idx][2])
+    return result
 
 
 def compute_energy(grey):
@@ -374,7 +408,8 @@ def compute_energy(grey):
 
     Returns a greyscale image (represented as a dictionary).
     """
-    raise NotImplementedError
+    result = edges(grey)
+    return result
 
 
 def cumulative_energy_map(energy):
@@ -387,7 +422,25 @@ def cumulative_energy_map(energy):
     the values in the 'pixels' array may not necessarily be in the range [0,
     255].
     """
-    raise NotImplementedError
+    result = {
+    "height": energy["height"],
+    "width": energy["width"],
+    "pixels": [[0 for _ in range(energy["width"])] for _ in range(energy["height"])]
+    }
+    twod_energy = oned_to_twod(energy)
+    for j in range(energy["width"]):
+        result["pixels"][0][j] = twod_energy["pixels"][0][j]
+
+    for i in range(1, energy["height"]):
+        for j in range(energy["width"]):
+            if(j == 0):
+                 result["pixels"][i][j] = twod_energy["pixels"][i][j] + min(result["pixels"][i -1][j], result["pixels"][i-1][j + 1])
+            elif (j == energy["width"] - 1):
+                 result["pixels"][i][j] = twod_energy["pixels"][i][j] + min(result["pixels"][i -1][j], result["pixels"][i-1][j - 1])
+            else:
+                 result["pixels"][i][j] = twod_energy["pixels"][i][j] + min(result["pixels"][i -1][j], result["pixels"][i-1][j - 1], result["pixels"][i -1][j + 1])
+    result["pixels"] = flatten(result["pixels"])
+    return result
 
 
 def minimum_energy_seam(cem):
@@ -396,7 +449,37 @@ def minimum_energy_seam(cem):
     the 'pixels' list that correspond to pixels contained in the minimum-energy
     seam (computed as described in the lab 2 writeup).
     """
-    raise NotImplementedError
+    twod_cem = oned_to_twod(cem)
+    bottom_row = cem["height"] - 1
+    min_value = min(twod_cem["pixels"][bottom_row])
+    min_index = twod_cem["pixels"][bottom_row].index(min_value)
+    pixels = []
+    pixels.append(bottom_row * cem["width"]  +  min_index )
+    for i in range(bottom_row, 0, -1):
+        if(min_index == 0):
+            min1 = twod_cem["pixels"][i -1][min_index] 
+            min2  = twod_cem["pixels"][i-1][min_index + 1]
+            if(min1 > min2):
+                min_index = min_index + 1
+            pixels.append((i - 1) * cem["width"]  +  min_index )
+        elif (min_index == cem["width"] - 1):
+            min1 = twod_cem["pixels"][i -1][min_index]
+            min2 = twod_cem["pixels"][i-1][min_index - 1]
+            if (min2 <= min1):
+                min_index = min_index - 1
+            pixels.append((i-1) * cem["width"]  +  min_index )
+        else:
+            min1=  twod_cem["pixels"][i -1][min_index] 
+            min2 = twod_cem["pixels"][i-1][min_index - 1] 
+            min3 = twod_cem["pixels"][i-1][min_index + 1]
+            if(min2 > min3 and min3 < min1):
+                min_index = min_index + 1
+            elif (min3 >= min2 and min2 <= min1):
+                min_index = min_index - 1
+            elif (min1 == min2 == min3):
+                 min_index = min_index - 1 
+            pixels.append((i - 1) * cem["width"]  +  min_index )
+    return pixels[::-1]
 
 
 def image_without_seam(image, seam):
@@ -406,8 +489,70 @@ def image_without_seam(image, seam):
     pixels from the original image except those corresponding to the locations
     in the given list.
     """
-    raise NotImplementedError
+    val = 0
+    width = False
+    result = {
+        "height" : image["height"],
+        "width" : image["width"],
+        "pixels" : [0 for _ in range(image["width"] * image["height"])]
+    }
+    for idx, i in enumerate(image["pixels"]):
+        if (idx not in seam):
+            result["pixels"][idx] = i
+    while (val in result["pixels"]):
+        result["pixels"].remove(val)
+        width = True
+    if (width):
+        result["width"] = result["width"] - 1
+    return result
 
+
+def custom_feature(image, frequency=5, amplitude=5):
+    """
+    Applies a ripple distortion effect centered on the image.
+
+    Args:
+        image: A color image dictionary.
+        frequency: Controls number of ripples (higher = more rings).
+        amplitude: Controls strength of distortion.
+
+    Returns:
+        A new color image with ripple effect applied.
+    """
+    height, width = image["height"], image["width"]
+    cx, cy = width / 2, height / 2
+
+    result = {
+        "height": height,
+        "width": width,
+        "pixels": []
+    }
+
+    twod = oned_to_twod(image)
+
+    for y in range(height):
+        for x in range(width):
+            dx = x - cx
+            dy = y - cy
+            r = math.sqrt(dx**2 + dy**2)
+
+            # Ripple effect (radial displacement)
+            displacement = amplitude * math.sin(r / frequency)
+
+            # Calculate new coordinates with angle preserved
+            if r == 0:
+                new_x, new_y = x, y
+            else:
+                factor = (r + displacement) / r
+                new_x = int(cx + dx * factor)
+                new_y = int(cy + dy * factor)
+
+            # Clamp and fetch color
+            new_x = min(max(new_x, 0), width - 1)
+            new_y = min(max(new_y, 0), height - 1)
+            result["pixels"].append(twod["pixels"][new_y][new_x])
+
+    return result
 
 # HELPER FUNCTIONS FOR DISPLAYING, LOADING, AND SAVING IMAGES
 
@@ -566,7 +711,8 @@ def save_greyscale_image(image, filename, mode="PNG"):
 
 
 if __name__ == "__main__":
-    # code in this block will only be run when you explicitly run your script,
-    # and not when the tests are being run.  this is a good place for
-    # generating images, etc.
-    pass
+    print("Loading twocats.png...")
+    img = load_color_image("test_images/twocats.png")
+    carved = seam_carving(img, 100)
+    save_color_image(carved, "twocats_carved.png")
+    print("Saved as twocats_carved.png")
