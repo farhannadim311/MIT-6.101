@@ -256,7 +256,7 @@ Make sure `test_images/twocats.png` exists or change the path in the script.
 - Creativity in developing new visual effects
 
 ---
-# 🎬 Bacon Number Lab - MIT 6.101
+# 🎬 PSET4 Bacon Number Lab - MIT 6.101
 
 This project explores the famous "Bacon Number" problem, identifying the degrees of separation between actors through shared movie appearances. Built using pure Python and a simple WSGI server, it also includes a frontend to visualize and interact with the actor/movie network.
 
