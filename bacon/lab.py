@@ -144,26 +144,40 @@ def movie_path(transformed_data, actor_id_1, actor_id_2, movie_data):
     
     
 def actors_connecting_films(transformed_data, film1, film2):
-    if (str(film1) not in transformed_data or str(film2) not in transformed_data):
+    # If either film doesn't exist, return None
+    if str(film1) not in transformed_data or str(film2) not in transformed_data:
         return None
-    if(film1 == film2):
-        return transformed_data[str(film1)][0]
-    path = []
-    movie_visited = set()
-    possible_paths = [(transformed_data[str(film1)], )]
-    while(possible_paths):
-        path = possible_paths.pop(0)
-        curr_loc = path[-1]
-        lst = actors_in_movies(transformed_data, curr_loc)
-        for k in lst:
-            for neighbor in movies(transformed_data, k):
-                if neighbor not in movie_visited:
-                    movie_visited.add(neighbor)
-                    possible_paths.append(path + (neighbor, ))
-                if neighbor == film2:
-                    return path
+
+    # Get the list of actors in each film
+    actors_in_film1 = transformed_data[str(film1)]
+    actors_in_film2 = set(transformed_data[str(film2)])
+
+    # If both film IDs are the same, return any actor in that film as a singleton list
+    if film1 == film2:
+        return [actors_in_film1[0]]
+
+    # BFS from all actors in film1, stop at first actor in film2
+    visited = set()
+    queue = []
+
+    for actor in actors_in_film1:
+        queue.append((actor, [actor]))
+        visited.add(actor)
+
+    while queue:
+        current_actor, path = queue.pop(0)
+
+        if current_actor in actors_in_film2:
+            return path
+
+        for neighbor in actors(transformed_data, current_actor):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append((neighbor, path + [neighbor]))
+
     return None
-    
+
+
 
 
 if __name__ == "__main__":
@@ -174,9 +188,3 @@ if __name__ == "__main__":
 
     print(raw_data)
 
-
-    
-
-    # additional code here will be run only when lab.py is invoked directly
-    # (not when imported from test.py), so this is a good place to put code
-    # used, for example, to generate the results for the online questions.
