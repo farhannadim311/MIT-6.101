@@ -40,8 +40,10 @@ This technique is foundational for **responsive media layouts**, enabling images
 ## Demo
 **Original Image:**
 ![Original](twocats.png)
+
 *(Note the wide gap between the cats and the edge)*
 
 **Seam Carved Result (100px removed):**
 ![Resized](twocats_seam_carved.png)
+
 *(Note that the background was removed, bringing the cats closer to the edge, but the cats themselves were not squished)*
