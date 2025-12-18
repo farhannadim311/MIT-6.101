@@ -36,26 +36,10 @@ This technique is foundational for **responsive media layouts**, enabling images
 - **Performance**
   - Optimized 1D array representation for 2D image data  
   - Reduced memory overhead during seam removal
-## Usage
-
-### 1. Run the script
-This script can be imported as a module or run directly to process images.
-
-```python
-from lab import load_color_image, save_color_image, seam_carving
-
-# Load original image
-image = load_color_image('input.png')
-
-# Remove 100 columns (pixels) content-awarely
-resized = seam_carving(image, ncols=100)
-
-# Save result
-save_color_image(resized, 'output.png')
-
+---
+## Demo
 **Original Image:**
 ![Original](twocats.png)
 
 **Seam Carved Result (100px removed):**
 ![Resized](twocats_seam_carved.png)
----
