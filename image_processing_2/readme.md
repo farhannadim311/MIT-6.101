@@ -53,3 +53,14 @@ resized = seam_carving(image, ncols=100)
 
 # Save result
 save_color_image(resized, 'output.png')
+
+
+## Demo
+
+**Original Image:**
+![Original](demo_images/twocats.png)
+*(Note the wide gap between the cats and the edge)*
+
+**Seam Carved Result (100px removed):**
+![Resized](demo_images/twocats_seam_carved.png)
+*(Note that the background was removed, bringing the cats closer to the edge, but the cats themselves were not squished)*
