@@ -27,7 +27,6 @@ This technique is foundational for **responsive media layouts**, enabling images
     - Color channel correlation
 
 ---
-
 ## Technical Implementation
 
 - **Language:** Python 3  
@@ -54,11 +53,9 @@ resized = seam_carving(image, ncols=100)
 # Save result
 save_color_image(resized, 'output.png')
 
-## Demo
 **Original Image:**
 ![Original](twocats.png)
-*(Note the wide gap between the cats and the edge)*
 
 **Seam Carved Result (100px removed):**
 ![Resized](twocats_seam_carved.png)
-*(Note that the background was removed, bringing the cats closer to the edge, but the cats themselves were not squished)*
+---
